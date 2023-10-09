@@ -118,6 +118,7 @@ name = "bunny_sniper"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
+ "rand",
  "serenity",
  "tokio",
  "tracing",
