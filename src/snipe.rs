@@ -23,7 +23,7 @@ macro_rules! snipe {
 
             // Check if there are deleted messages and if there is none then say there is none
             if locked.len() == 0 || *id_locked == 0 {
-                msg.channel_id.say(&ctx.http, "There are no cached deleted messages").await?;
+                msg.channel_id.say(&ctx.http, "There are no cached messages").await?;
                 return Ok(());
             }
             let filtered = locked.iter().filter(|m| m.id == *id_locked).collect::<Vec<_>>();
