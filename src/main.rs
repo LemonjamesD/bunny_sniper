@@ -1,4 +1,5 @@
 pub mod secrets;
+pub mod snipe;
 
 use secrets::TOKEN;
 
@@ -36,8 +37,11 @@ async fn main() {
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
+    let framework =
+        StandardFramework::new().configure(|c| c.prefix(".")).group(&SNIPE);
+
     let mut client =
-        Client::builder(&TOKEN, intents).event_handler(Handler).await.expect("Err creating client");
+        Client::builder(&TOKEN, intents).framework(framework).event_handler(Handler).await.expect("Err creating client");
 
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
