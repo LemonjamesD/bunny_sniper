@@ -18,6 +18,7 @@ struct Handler;
 lazy_static! {
     pub static ref PAST_MESSAGES: Mutex<Vec<(String, String, u64)>> = Mutex::new(vec![]);
     pub static ref LAST_DELETED_ID: Mutex<u64> = Mutex::new(0);
+    pub static ref LAST_EDITTED_ID: Mutex<u64> = Mutex::new(0);
 }
 
 // So you can't use up too much memory
@@ -37,6 +38,26 @@ impl EventHandler for Handler {
     async fn message_delete(&self, _ctx: Context, _channel_id: ChannelId, deleted_message_id: MessageId, _guild_id: Option<GuildId>,) {
         let mut locked = LAST_DELETED_ID.lock().await;
         *locked = deleted_message_id.0;
+    }
+
+    async fn message_update(&self, _ctx: Context, _old_if_available: Option<Message>, new: Option<Message>, event: MessageUpdateEvent) {
+        // Push the new editted message onto the message stack
+        let mut locked = PAST_MESSAGES.lock().await;
+        // Remove unneeded cached messages
+        if locked.len() + 1 >= CACHE_CAP {
+            locked.remove(0);
+        }
+        if let Some(new) = new {
+            locked.push((new.author.name.clone(), new.content.clone(), new.id.0));
+        
+            let mut locked = LAST_EDITTED_ID.lock().await;
+            *locked = new.id.0;
+        } else {
+            locked.push((event.author.unwrap().name.clone(), event.content.unwrap().clone(), event.id.0));
+            
+            let mut locked = LAST_EDITTED_ID.lock().await;
+            *locked = event.id.0;
+        }
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
