@@ -45,7 +45,7 @@ const CACHE_CAP: usize = 30;
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn message(&self, ctx: Context, msg: Message) {
+    async fn message(&self, _ctx: Context, msg: Message) {
         let mut locked = PAST_MESSAGES.lock().await;
         // Remove unneeded cached messages
         if locked.len() + 1 >= CACHE_CAP {
