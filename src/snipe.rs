@@ -3,7 +3,15 @@ use serenity::prelude::*;
 use serenity::model::prelude::*;
 use serenity::framework::standard::macros::{command, group};
 
+use rand::{Rng, thread_rng};
+
 use crate::{PAST_MESSAGES, LAST_DELETED_ID, LAST_EDITTED_ID};
+
+fn random_color() -> u32 {
+    let mut rng = thread_rng();
+
+    rng.gen_range(0..16777215)
+}
 
 #[command]
 pub async fn snipe(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
@@ -15,7 +23,13 @@ pub async fn snipe(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResu
         return Ok(());
     }
     let filtered = locked.iter().filter(|(author, content, id)| *id == *id_locked).collect::<Vec<_>>()[0];
-    msg.channel_id.say(&ctx.http, format!("Sender: {}\nContext: {}\nId: {}", filtered.0, filtered.1, filtered.2)).await?;
+    msg.channel_id.send_message(&ctx.http, |m| {
+        m.add_embed(|e| {
+            e.field("Author", filtered.0.clone(), false)
+             .field("Message", filtered.1.clone(), false)
+             .color(random_color())
+        })
+    }).await?;
 
     Ok(())
 }
@@ -32,7 +46,13 @@ pub async fn edit_snipe(ctx: &Context, msg: &Message, mut _args: Args) -> Comman
     }
     let filtered = locked.iter().filter(|(author, content, id)| *id == *id_locked).collect::<Vec<_>>();
     let filtered = filtered[filtered.len() - 1];
-    msg.channel_id.say(&ctx.http, format!("Sender: {}\nContext: {}\nId: {}", filtered.0, filtered.1, filtered.2)).await?;
+    msg.channel_id.send_message(&ctx.http, |m| {
+        m.add_embed(|e| {
+            e.field("Author", filtered.0.clone(), false)
+             .field("Message", filtered.1.clone(), false)
+             .color(random_color())
+        })
+    }).await?;
 
     Ok(())
 }
