@@ -20,10 +20,17 @@ lazy_static! {
     pub static ref LAST_DELETED_ID: Mutex<u64> = Mutex::new(0);
 }
 
+// So you can't use up too much memory
+const CACHE_CAP: usize = 10;
+
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         let mut locked = PAST_MESSAGES.lock().await;
+        // Remove unneeded cached messages
+        if locked.len() + 1 >= CACHE_CAP {
+            locked.remove(0);
+        }
         locked.push((msg.author.name.clone(), msg.content.clone(), msg.id.0));
     }
 
