@@ -2,7 +2,8 @@ use serenity::{framework::standard::macros::group, prelude::Context};
 
 #[command]
 pub async fn snipe(ctx: &Context, msg: &Message) {
-    msg.channel.say(&ctx.http, format!("Sender: {}\nContext: {}", PAST_MESSAGES.0, PAST_MESSAGES.1)).await?;
+    let locked = PAST_MESSAGES.lock();
+    msg.channel.say(&ctx.http, format!("Sender: {}\nContext: {}", locked[0].0, locked[0].1)).await?;
 }
 
 #[group]
