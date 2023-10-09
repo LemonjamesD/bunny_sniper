@@ -17,6 +17,7 @@ struct Handler;
 // Hold the past messages
 lazy_static! {
     pub static ref PAST_MESSAGES: Mutex<Vec<(String, String, u64)>> = Mutex::new(vec![]);
+    pub static ref LAST_DELETED_ID: Mutex<u64> = Mutex::new(0);
 }
 
 #[async_trait]
@@ -24,6 +25,11 @@ impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         let mut locked = PAST_MESSAGES.lock().await;
         locked.push((msg.author.name.clone(), msg.content.clone(), msg.id.0));
+    }
+
+    async fn message_delete(&self, _ctx: Context, _channel_id: ChannelId, deleted_message_id: MessageId, _guild_id: Option<GuildId>,) {
+        let mut locked = LAST_DELETED_ID.lock().await;
+        *locked = deleted_message_id.0;
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
