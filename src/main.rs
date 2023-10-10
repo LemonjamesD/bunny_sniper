@@ -102,7 +102,7 @@ async fn main() {
         | GatewayIntents::MESSAGE_CONTENT;
 
     let framework =
-        StandardFramework::new().configure(|c| c.prefix(".")).group(&SNIPE_GROUP);
+        StandardFramework::new().configure(|c| c.prefix(",")).group(&SNIPE_GROUP);
 
     let mut client =
         Client::builder(&TOKEN, intents).framework(framework).event_handler(Handler).await.expect("Err creating client");

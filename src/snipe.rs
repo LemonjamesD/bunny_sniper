@@ -17,29 +17,49 @@ fn random_color() -> u32 {
 macro_rules! snipe {
     ($fn_name:ident, $cache:ident, $id:ident) => {
         #[command]
-        pub async fn $fn_name(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
-            let locked = $cache.lock().await;
-            let id_locked = $id.lock().await;
+        pub async fn $fn_name(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+            if args.len() >= 1 {
+                let result = match args.single::<usize>() {
+                    Ok(ok) => ok,
+                    Err(_) => {
+                        msg.channel_id.say(&ctx.http, "That is not a valid input for the index of the deleted messages").await?;
+                        return Ok(());
+                    }
+                };
 
-            // Check if there are deleted messages and if there is none then say there is none
-            if locked.len() == 0 || *id_locked == 0 {
-                msg.channel_id.say(&ctx.http, "There are no cached messages").await?;
-                return Ok(());
-            }
-            let filtered = locked.iter().filter(|m| m.channel_id == msg.channel_id.0 && m.id == *id_locked).collect::<Vec<_>>();
-            if filtered.len() == 0 {
-                msg.channel_id.say(&ctx.http, "There are no cached messages").await?;
-                return Ok(());
-            }
-            let filtered = filtered[filtered.len() - 1];
-            msg.channel_id.send_message(&ctx.http, |m| {
-                m.add_embed(|e| {
-                    e.field("Author", filtered.author.clone(), false)
-                     .field("Message", filtered.content.clone(), false)
-                     .color(random_color())
-                })
-            }).await?;
+                let locked = $cache.lock().await;
+                let filtered = locked.iter().filter(|m| m.channel_id == msg.channel_id.0).collect::<Vec<_>>()[result];
+                
+                msg.channel_id.send_message(&ctx.http, |m| {
+                    m.add_embed(|e| {
+                        e.field("Author", filtered.author.clone(), false)
+                         .field("Message", filtered.content.clone(), false)
+                         .color(random_color())
+                    })
+                }).await?;
+            } else {
+                let locked = $cache.lock().await;
+                let id_locked = $id.lock().await;
 
+                // Check if there are deleted messages and if there is none then say there is none
+                if locked.len() == 0 || *id_locked == 0 {
+                    msg.channel_id.say(&ctx.http, "There are no cached messages").await?;
+                    return Ok(());
+                }
+                let filtered = locked.iter().filter(|m| m.channel_id == msg.channel_id.0 && m.id == *id_locked).collect::<Vec<_>>();
+                if filtered.len() == 0 {
+                    msg.channel_id.say(&ctx.http, "There are no cached messages").await?;
+                    return Ok(());
+                }
+                let filtered = filtered[filtered.len() - 1];
+                msg.channel_id.send_message(&ctx.http, |m| {
+                    m.add_embed(|e| {
+                        e.field("Author", filtered.author.clone(), false)
+                         .field("Message", filtered.content.clone(), false)
+                         .color(random_color())
+                    })
+                }).await?;
+            }
             Ok(())
         }
     }
