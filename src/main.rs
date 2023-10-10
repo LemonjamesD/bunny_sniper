@@ -18,14 +18,16 @@ struct Handler;
 pub struct MessageType {
     author: String,
     content: String,
+    channel_id: u64,
     id: u64
 }
 
 impl MessageType {
-    pub fn new(author: String, content: String, id: u64) -> Self {
+    pub fn new(author: String, content: String, channel_id: u64, id: u64) -> Self {
         Self {
             author,
             content,
+            channel_id,
             id
         }
     }
@@ -51,7 +53,7 @@ impl EventHandler for Handler {
         if locked.len() + 1 >= CACHE_CAP {
             locked.remove(0);
         }
-        locked.push(MessageType::new(msg.author.name, msg.content, msg.id.0));
+        locked.push(MessageType::new(msg.author.name, msg.content, msg.channel_id.0, msg.id.0));
     }
 
     async fn message_delete(&self, _ctx: Context, _channel_id: ChannelId, deleted_message_id: MessageId, _guild_id: Option<GuildId>,) {
@@ -75,8 +77,8 @@ impl EventHandler for Handler {
         }
         // Create the MessageType before hand for less code dupe
         let message_type = match new {
-            Some(new) => MessageType::new(new.author.name.clone(), new.content.clone(), new.id.0),
-            None => MessageType::new(event.author.unwrap().name.clone(), event.content.unwrap().clone(), event.id.0),
+            Some(new) => MessageType::new(new.author.name.clone(), new.content.clone(), new.channel_id.0, new.id.0),
+            None => MessageType::new(event.author.unwrap().name.clone(), event.content.unwrap().clone(), event.channel_id.0, event.id.0),
         };
         
         locked.push(message_type.clone());

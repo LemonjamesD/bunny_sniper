@@ -26,7 +26,11 @@ macro_rules! snipe {
                 msg.channel_id.say(&ctx.http, "There are no cached messages").await?;
                 return Ok(());
             }
-            let filtered = locked.iter().filter(|m| m.id == *id_locked).collect::<Vec<_>>();
+            let filtered = locked.iter().filter(|m| m.channel_id == msg.channel_id.0 && m.id == *id_locked).collect::<Vec<_>>();
+            if filtered.len() == 0 {
+                msg.channel_id.say(&ctx.http, "There are no cached messages").await?;
+                return Ok(());
+            }
             let filtered = filtered[filtered.len() - 1];
             msg.channel_id.send_message(&ctx.http, |m| {
                 m.add_embed(|e| {
