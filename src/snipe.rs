@@ -18,8 +18,9 @@ macro_rules! snipe {
     ($fn_name:ident, $cache:ident, $id:ident) => {
         #[command]
         pub async fn $fn_name(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+            // First block for args part
             if args.len() >= 1 {
-                let result = match args.single::<usize>() {
+                let idx = match args.single::<usize>() {
                     Ok(ok) => ok,
                     Err(_) => {
                         msg.channel_id.say(&ctx.http, "That is not a valid input for the index of the deleted messages").await?;
@@ -28,11 +29,20 @@ macro_rules! snipe {
                 };
 
                 let locked = $cache.lock().await;
-                let filtered = locked.iter().filter(|m| m.channel_id == msg.channel_id.0).collect::<Vec<_>>()[result];
+                let filtered = locked.iter().filter(|m| m.channel_id == msg.channel_id.0).collect::<Vec<_>>();
+                let filtered = match filtered.get(filtered.len() - 1 - idx) {
+                    Some(some) => some,
+                    _ => return Ok(()),
+                };
                 
                 msg.channel_id.send_message(&ctx.http, |m| {
                     m.add_embed(|e| {
-                        e.field("Author", filtered.author.clone(), false)
+                        e.author(|a| {
+                            match filtered.author.avatar_url().clone() {
+                                Some(av) => a.icon_url(av).name(filtered.author.name.clone()),
+                                None => a.name(filtered.author.name.clone())
+                            }
+                         })
                          .field("Message", filtered.content.clone(), false)
                          .color(random_color())
                     })
@@ -54,7 +64,12 @@ macro_rules! snipe {
                 let filtered = filtered[filtered.len() - 1];
                 msg.channel_id.send_message(&ctx.http, |m| {
                     m.add_embed(|e| {
-                        e.field("Author", filtered.author.clone(), false)
+                        e.author(|a| {
+                            match filtered.author.avatar_url().clone() {
+                                Some(av) => a.icon_url(av).name(filtered.author.name.clone()),
+                                None => a.name(filtered.author.name.clone())
+                            }
+                         })
                          .field("Message", filtered.content.clone(), false)
                          .color(random_color())
                     })
