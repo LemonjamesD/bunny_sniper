@@ -62,7 +62,11 @@ impl EventHandler for Handler {
 
         // Get the deleted message to add to the deleted_messages stack
         let past_messages = PAST_MESSAGES.lock().await;
-        let filtered = past_messages.iter().filter(|m| deleted_message_id.0 == m.id).collect::<Vec<_>>()[0];
+        let filtered = past_messages.iter().filter(|m| deleted_message_id.0 == m.id).collect::<Vec<_>>();
+        if filtered.len() == 0 {
+            return;
+        }
+        let filtered = filtered[0];
 
         let mut deleted_messages = DELETED_MESSAGES.lock().await;
         deleted_messages.push(filtered.clone());
